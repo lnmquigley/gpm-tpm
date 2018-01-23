@@ -1,0 +1,20 @@
+####linux commands to get average length of reads mapping to each ORF in a .sam file####
+####need this number to accurately calculate GPM/TPM (Wagner 2012)####
+####full disclosure I do not know how to write shell scripts… yet keeping these here as record until I learn and then write rl.sh####
+
+####STEP 1: get gene_id (ORF) and seq_length from .sam###
+awk '{print$3, length($10)}' file.sam > file.txt
+
+####STEP 2: get rid of a bunch of unnecessary things that apparently come along for the ride###
+awk ‘!/LN:/’ file.txt > file2.txt
+awk ‘!/PN:/’ file2.txt > file3.txt
+awk ‘!/SO:unsorted/‘ file3.txt > file4.txt
+
+####STEP 3: split .txt into two columns####
+awk -F” “ ‘$1=$1’ OFS=“\t” file4.txt > file4_col.txt
+
+####STEP 4: calculate groupby gene_id mean seq_length####
+awk '{a[$1]++;b[$1]=b[$1]+$2}END{for (i in a) printf("%s %10.0f %10.0f %10.2f\n", i, a[i], b[i], b[i]/a[i])}' file4_col.txt > rl.txt
+
+####STEP 5: sort####
+rl.txt > rl_sort.txt
